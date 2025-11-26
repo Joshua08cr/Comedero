@@ -1,0 +1,48 @@
+#include <ESP32Servo.h>
+
+const int pirSensorPin = 23;       // Sensor PIR
+const int servoMotorPin = 13;      // Servo motor (PWM)
+const int indicadorLedPin = 4;     // LED indicador
+
+Servo servoComedero;
+int anguloLiberar = 140;           // Ángulo para dispensar
+int anguloReposo = 40;             // Ángulo cerrado
+bool alimentoDispensado = false;
+
+void setup() {
+  Serial.begin(115200);
+  pinMode(pirSensorPin, INPUT);
+  pinMode(indicadorLedPin, OUTPUT);
+
+  servoComedero.attach(servoMotorPin);
+  servoComedero.write(anguloReposo);
+  digitalWrite(indicadorLedPin, LOW);
+
+  Serial.println("Comedero Inteligente: Modo EN ESPERA...");
+}
+
+void loop() {
+  int deteccion = digitalRead(pirSensorPin);
+
+  if (deteccion == HIGH && !alimentoDispensado) {
+    Serial.println(">>> ¡Gato detectado! Dispensando alimento...");
+    servoComedero.write(anguloLiberar);
+    digitalWrite(indicadorLedPin, HIGH);
+
+    delay(1500); // tiempo para que caiga el alimento
+
+    servoComedero.write(anguloReposo);
+    digitalWrite(indicadorLedPin, LOW);
+    alimentoDispensado = true;
+
+    Serial.println("Dispensación completada. Servo cerrado.");
+    delay(10000); // evita re-disparos
+  }
+
+  if (deteccion == LOW && alimentoDispensado) {
+    alimentoDispensado = false;
+    Serial.println("Sistema reiniciado. Listo para la próxima comida.");
+  }
+
+  delay(500);
+}
